@@ -1,4 +1,4 @@
-🚀 **World Layoffs Project** 🌍
+🚀 **World Layoffs Data Project** 🌍
 
 The global employment landscape has experienced significant shifts in recent years, as highlighted by our comprehensive World Layoffs Dashboard.
 
