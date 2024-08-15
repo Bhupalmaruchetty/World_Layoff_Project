@@ -1,0 +1,233 @@
+## Exploratory DataAnalysis ##
+
+## Retrieve All Records from Layoff Staging Data ##
+
+SELECT *
+FROM layoff_stagging2;
+
+
+
+
+
+## Query to Retrieve Maximum Values for Total and Percentage Layoffs ##
+
+SELECT MAX(total_laid_off),MAX(percentage_laid_off)
+FROM
+layoff_stagging2;
+
+
+
+## Query to Retrieve Non-Null Total Layoffs for Fully Laid-Off Companies ##
+
+SELECT *
+FROM layoff_stagging2
+Where percentage_laid_off=1
+Having total_laid_off is not null;
+
+
+## Query to Retrieve Fully Laid-Off Companies, Ordered by Total Layoffs in Descending Order ##
+
+SELECT *
+FROM
+layoff_stagging2
+Where percentage_laid_off=1
+order by total_laid_off Desc;
+
+
+
+
+## Which company having 1 percentage layoff and Order by Highest number of fund_raised_millions ##
+
+SELECT *
+FROM
+layoff_stagging2
+Where percentage_laid_off=1
+order by funds_raised_millions Desc;
+
+
+
+## Companies with the Highest Number of Layoffs ##
+
+SELECT company,sum(total_laid_off) as Laid_off
+FROM layoff_stagging2
+group by company 
+Order by laid_off desc;
+
+
+
+## Companies with the Least Number of Layoffs ##
+
+SELECT company,sum(total_laid_off) as Laid_off
+FROM layoff_stagging2
+group by company 
+having laid_off is not null
+Order by laid_off asc;
+
+
+
+
+
+
+
+## Query to Retrieve Minimum and Maximum Dates from Layoff Staging Data ##
+
+
+SELECT MIN(`date`),MAX(`date`)
+FROM layoff_stagging2;
+
+
+
+
+
+
+
+## What industries most affected by layoffs ##
+
+SELECT industry,sum(total_laid_off) as Laid_off
+FROM layoff_stagging2
+group by industry 
+Order by laid_off desc;
+
+
+
+
+
+## What industries Least affected by layoffs ##
+
+SELECT industry,sum(total_laid_off) as Laid_off
+FROM layoff_stagging2
+group by industry 
+having laid_off is not null
+Order by laid_off asc;
+
+
+
+## Which countries most affected by layoffs ##
+
+SELECT country,sum(total_laid_off)AS laid_off
+FROM layoff_stagging2
+GROUP BY country
+ORDER BY laid_off DESC;
+
+
+## ## Which countries Least affected by layoffs ##
+
+SELECT country,sum(total_laid_off)AS laid_off
+FROM layoff_stagging2
+GROUP BY country
+Having laid_off is not null
+ORDER BY laid_off ASC;
+
+
+
+
+
+
+
+## Total laid_off by Each Date ##
+
+SELECT `date`,sum(total_laid_off)AS laid_off
+FROM layoff_stagging2
+GROUP BY `date`
+ORDER BY `date` DESC;
+
+
+## Total laid_off by Each year ##
+
+SELECT year(`date`) as year,sum(total_laid_off)AS laid_off
+FROM layoff_stagging2
+GROUP BY year
+Having year is not null
+ORDER BY year DESC;
+
+
+
+## Query to Aggregate and Order Total Layoffs by Stage ##
+
+SELECT stage,sum(total_laid_off)AS laid_off
+FROM layoff_stagging2
+GROUP BY stage
+ORDER BY laid_off DESC;
+
+
+## Most percentage laid_off by the company ##
+
+SELECT company,round(sum(percentage_laid_off),1) AS Laid_off_percentage
+FROM layoff_stagging2
+GROUP BY company 
+ORDER BY laid_off_percentage DESC;
+
+
+## Query to Extract Month from Date in Layoff Staging Data ##
+
+SELECT substring(`date`,6,2) as Month
+FROM layoff_stagging2;
+
+
+
+
+## Query for Layoff Totals by Month with Ascending Date Order ##
+
+
+SELECT SUBSTRING(`date`,1,7) as `Month`,SUM(total_laid_off) as laid_off_total
+FROM layoff_stagging2
+WHERE SUBSTRING(`date`,1,7) IS NOT NULL
+GROUP BY `Month`
+ORDER BY `Month` ASC;
+
+
+## Query for Rolling Total of Layoffs Aggregated by Month ##
+
+WITH Rolling_Total AS 
+(
+SELECT SUBSTRING(`date`,1,7) as `Month`,SUM(total_laid_off) as laid_off_total
+FROM layoff_stagging2
+WHERE SUBSTRING(`date`,1,7) IS NOT NULL
+GROUP BY `Month`
+ORDER BY `Month` ASC
+)
+SELECT `Month`,laid_off_total,SUM(laid_off_total)OVER(ORDER BY `Month`)AS rolling_Total
+FROM Rolling_Total;
+
+
+
+## Top Companies by Yearly Layoff Totals ##
+
+SELECT company,year(`date`) as Years ,sum(total_laid_off) as Laid_off_total
+FROM layoff_stagging2
+group by company,Years
+order by laid_off_total desc;
+
+
+
+
+
+## Annual Company Layoff Rankings ##
+
+WITH Company_Year(Company,Years,Laid_off_total) AS
+(
+SELECT company,year(`date`) as Years ,sum(total_laid_off) as Laid_off_total
+FROM layoff_stagging2
+group by company,year(`date`) 
+)
+SELECT *,dense_rank() Over (partition by Years order by laid_off_total desc) AS Ranking
+FROM Company_Year
+WHERE Years is not null
+Order by Ranking ASC;
+
+
+## Yearly Top 5 Company Layoff Rankings ##
+
+WITH Company_Year(Company,Years,Laid_off_total) AS
+(
+SELECT company,year(`date`) as Years ,sum(total_laid_off) as Laid_off_total
+FROM layoff_stagging2
+group by company,year(`date`) 
+),Company_Year_Rank AS 
+(SELECT *,dense_rank() Over (partition by Years order by laid_off_total desc) AS Ranking
+FROM Company_Year
+WHERE Years is not null
+)
+SELECT *
+FROM Company_Year_Rank
+WHERE Ranking<=5;
